@@ -1,0 +1,3 @@
+(executable
+ (name qr)
+ (libraries owl))
