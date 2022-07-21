@@ -1,17 +1,50 @@
 open Owl
 
-let is_approx_zero x = Float.abs x < 0.00001
+module List = struct
+  include List
+
+  let prod xs ys =
+    List.(concat_map (fun x -> concat_map (fun y -> [ (x, y) ]) ys) xs)
+
+  let range n = List.init n Fun.id
+
+  let fold_left1 f = function
+    | [] -> raise (Invalid_argument "fold_left1")
+    | x :: xs -> List.fold_left f x xs
+end
+
 let is_square m = Mat.col_num m = Mat.row_num m
 
-let fold_left1 f = function
-  | [] -> raise (Invalid_argument "fold_left1")
-  | x :: xs -> List.fold_left f x xs
+let lower_tri_ijs n =
+  let ns = List.range n in
+  List.prod ns ns |> List.filter (fun (i, j) -> i > j)
+
+module Approx = struct
+  let is_zero x = Float.abs x < 1E-10
+
+  let is_upper_tri m =
+    is_square m
+    &&
+    let n = Mat.col_num m in
+    lower_tri_ijs n |> List.for_all (fun (i, j) -> is_zero (Mat.get m i j))
+
+  let is_eye m =
+    is_square m
+    &&
+    let n = Mat.col_num m in
+    Mat.(sub m (eye n)) |> Mat.for_all is_zero
+
+  let is_orthogonal m =
+    is_eye Mat.(dot m (transpose m)) && is_eye Mat.(dot (transpose m) m)
+
+  let equal m1 m2 = Mat.sub m1 m2 |> Mat.for_all is_zero
+end
 
 let givens n i j a b =
-  let m = Mat.eye n in
   let r = sqrt ((a *. a) +. (b *. b)) in
   let c = a /. r in
   let s = -.b /. r in
+  let m = Mat.eye n in
   Mat.set m i i c;
   Mat.set m j j c;
   Mat.set m i j s;
@@ -26,45 +59,31 @@ let to_zero m i j =
   assert (i > j);
   let a = Mat.get m j j in
   let b = Mat.get m i j in
-  if is_approx_zero b then Mat.eye n else givens n i j a b
-
-let test_to_zero a =
-  Mat.print a;
-  for i = 0 to Mat.row_num a - 1 do
-    for j = 0 to i - 1 do
-      Format.printf "\n\n=== Zero (%d,%d) ===\n" i j;
-      let g = to_zero a i j in
-      Format.printf "\nG";
-      Mat.print g;
-      let ga = Mat.dot g a in
-      Format.printf "\nGA";
-      Mat.print ga;
-      assert (Mat.get ga i j |> is_approx_zero)
-    done
-  done
+  if Approx.is_zero b then Mat.eye n else givens n i j a b
 
 let qr a =
   assert (is_square a);
-  let r = ref a in
-  let gs = ref [] in
-  for i = 0 to Mat.row_num a - 1 do
-    for j = 0 to Mat.col_num a - 1 do
-      if i > j then begin
-        let g = to_zero !r i j in
-        r := Mat.dot g !r;
-        gs := g :: !gs
-      end
-    done
-  done;
-  let q = Mat.(fold_left1 Mat.dot !gs |> transpose) in
-  (q, !r)
+  let n = Mat.col_num a in
+  let rec inner r gs = function
+    | [] -> (r, gs)
+    | (i, j) :: ijs ->
+        let g = to_zero r i j in
+        inner (Mat.dot g r) (g :: gs) ijs
+  in
+  let r, gs = inner a [] (lower_tri_ijs n) in
+  let q = List.fold_left1 Mat.dot gs |> Mat.transpose in
+  (q, r)
 
 let () =
-  (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 10.; 4.; 3. |] 3 3 in *)
-  let a = Mat.magic 5 in
-  test_to_zero a;
+  (* Example from Wikipedia: *)
+  (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
+  let a = Mat.uniform 5 5 in
   let q, r = qr a in
   Mat.print q;
   Mat.print r;
   Mat.print a;
-  Mat.(dot q r |> print)
+  assert (Approx.is_upper_tri r);
+  assert (Approx.is_orthogonal q);
+  let a' = Mat.dot q r in
+  assert (Approx.equal a a');
+  Mat.print a'
