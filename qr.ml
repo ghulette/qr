@@ -1,5 +1,7 @@
 open Owl
 
+let is_approx_zero x = Float.abs x < 0.00001
+
 let givens n i j a b =
   let m = Mat.eye n in
   let r = sqrt ((a *. a) +. (b *. b)) in
@@ -19,7 +21,7 @@ let to_zero m i j =
   assert (i > j);
   let a = Mat.get m j j in
   let b = Mat.get m i j in
-  givens n i j a b
+  if is_approx_zero b then Mat.eye n else givens n i j a b
 
 let test_to_zero a =
   Mat.print a;
@@ -32,10 +34,10 @@ let test_to_zero a =
       let ga = Mat.dot g a in
       Format.printf "\nGA";
       Mat.print ga;
-      assert (Mat.get ga i j |> Float.abs < 0.00001)
+      assert (Mat.get ga i j |> is_approx_zero)
     done
   done
 
 let () =
-  Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 1.; 4.; 3. |] 3 3 |> test_to_zero;
+  Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 |> test_to_zero;
   Mat.magic 4 |> test_to_zero
