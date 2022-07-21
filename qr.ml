@@ -3,6 +3,10 @@ open Owl
 let is_approx_zero x = Float.abs x < 0.00001
 let is_square m = Mat.col_num m = Mat.row_num m
 
+let fold_left1 f = function
+  | [] -> raise (Invalid_argument "fold_left1")
+  | x :: xs -> List.fold_left f x xs
+
 let givens n i j a b =
   let m = Mat.eye n in
   let r = sqrt ((a *. a) +. (b *. b)) in
@@ -41,24 +45,26 @@ let test_to_zero a =
 
 let qr a =
   assert (is_square a);
-  let m = ref a in
+  let r = ref a in
   let gs = ref [] in
   for i = 0 to Mat.row_num a - 1 do
     for j = 0 to Mat.col_num a - 1 do
       if i > j then begin
-        let g = to_zero !m i j in
-        m := Mat.dot g !m;
+        let g = to_zero !r i j in
+        r := Mat.dot g !r;
         gs := g :: !gs
       end
     done
   done;
-  (!m, !gs)
+  let q = Mat.(fold_left1 Mat.dot !gs |> transpose) in
+  (q, !r)
 
 let () =
-  let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in
+  (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 10.; 4.; 3. |] 3 3 in *)
+  let a = Mat.magic 5 in
   test_to_zero a;
-  test_to_zero (Mat.magic 4);
-  let r, gs = qr a in
-  let qt = List.fold_left Mat.dot (Mat.eye 3) gs in
+  let q, r = qr a in
+  Mat.print q;
+  Mat.print r;
   Mat.print a;
-  Mat.(dot (transpose qt) r |> print)
+  Mat.(dot q r |> print)
