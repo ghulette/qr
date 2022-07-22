@@ -78,8 +78,9 @@ let () =
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
 
-  (* Generate a "random" matrix A *)
-  let a = Mat.(sub_scalar (mul_scalar (uniform 5 5) 200.) 100.) in
+  (* Generate a "random" square matrix A with size n *)
+  let n = 5 in
+  let a = Mat.((uniform n n *$ 200.) -$ 100.) in
   Format.printf "A:";
   Mat.print a;
 
@@ -100,4 +101,4 @@ let () =
   let qr = Mat.dot q r in
   Format.printf "\nQR-A:";
   Mat.print (Mat.sub qr a);
-  assert (Approx.equal a qr)
+  assert (Approx.equal a qr);
