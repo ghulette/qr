@@ -78,12 +78,16 @@ let () =
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
   let a = Mat.(sub_scalar (mul_scalar (uniform 5 5) 200.) 100.) in
-  let q, r = qr a in
-  Mat.print q;
-  Mat.print r;
+  Format.printf "A:";
   Mat.print a;
-  assert (Approx.is_upper_tri r);
+  let q, r = qr a in
+  Format.printf "\nQ:";
+  Mat.print q;
   assert (Approx.is_orthogonal q);
-  let a' = Mat.dot q r in
-  assert (Approx.equal a a');
-  Mat.print a'
+  Format.printf "\nR:";
+  Mat.print r;
+  assert (Approx.is_upper_tri r);
+  let qr = Mat.dot q r in
+  assert (Approx.equal a qr);
+  Format.printf "\nQR:";
+  Mat.print qr
