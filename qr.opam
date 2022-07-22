@@ -1,0 +1,16 @@
+opam-version: "2.0"
+maintainer: "Geoff Hulette <geoff@hulette.net>"
+authors: ["Geoff Hulette <geoff@hulette.net>"]
+version: "dev"
+license: "MIT"
+
+synopsis: "QR decomposition demo"
+
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
+
+depends: [
+  "dune" { >= "3.0" }
+  "owl"
+]
