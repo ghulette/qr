@@ -77,7 +77,7 @@ let qr a =
 let () =
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
-  let a = Mat.uniform 5 5 in
+  let a = Mat.(sub_scalar (mul_scalar (uniform 5 5) 200.) 100.) in
   let q, r = qr a in
   Mat.print q;
   Mat.print r;
