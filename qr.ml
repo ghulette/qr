@@ -75,6 +75,8 @@ let qr a =
   (q, r)
 
 let () =
+  let fmt x = Printf.sprintf "%0.2f" x in
+
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
 
@@ -82,23 +84,23 @@ let () =
   let n = 5 in
   let a = Mat.((uniform n n *$ 200.) -$ 100.) in
   Format.printf "A:";
-  Mat.print a;
+  Mat.print ~fmt a;
 
   (* QR decomposition *)
   let q, r = qr a in
 
   (* Q is orthogonal, i.e., QQ' = Q'Q = I *)
   Format.printf "\nQ:";
-  Mat.print q;
+  Mat.print ~fmt q;
   assert (Approx.is_orthogonal q);
 
   (* R is upper triangular *)
   Format.printf "\nR:";
-  Mat.print r;
+  Mat.print ~fmt r;
   assert (Approx.is_upper_tri r);
 
   (* QR = A *)
   let qr = Mat.dot q r in
   Format.printf "\nQR-A:";
-  Mat.print (Mat.sub qr a);
-  assert (Approx.equal a qr);
+  Mat.print ~fmt (Mat.sub qr a);
+  assert (Approx.equal a qr)
