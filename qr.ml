@@ -64,19 +64,21 @@ let to_zero m i j =
 let qr a =
   assert (is_square a);
   let n = Mat.col_num a in
-  let rec inner r gs = function
+  let rec loop r gs = function
     | [] -> (r, gs)
     | (i, j) :: ijs ->
         let g = to_zero r i j in
-        inner (Mat.dot g r) (g :: gs) ijs
+        loop (Mat.dot g r) (g :: gs) ijs
   in
-  let r, gs = inner a [] (lower_tri_ijs n) in
+  let r, gs = loop a [] (lower_tri_ijs n) in
   let q = List.fold_left1 Mat.dot gs |> Mat.transpose in
   (q, r)
 
 let () =
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
+
+  (* "random" matrix *)
   let a = Mat.(sub_scalar (mul_scalar (uniform 5 5) 200.) 100.) in
   Format.printf "A:";
   Mat.print a;
@@ -89,5 +91,5 @@ let () =
   assert (Approx.is_upper_tri r);
   let qr = Mat.dot q r in
   assert (Approx.equal a qr);
-  Format.printf "\nQR:";
-  Mat.print qr
+  Format.printf "\nQR - A:";
+  Mat.print (Mat.sub qr a)
