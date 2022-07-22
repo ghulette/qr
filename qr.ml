@@ -78,18 +78,26 @@ let () =
   (* Example from Wikipedia: *)
   (* let a = Mat.of_array [| 6.; 5.; 1.; 5.; 1.; 4.; 0.; 4.; 3. |] 3 3 in *)
 
-  (* "random" matrix *)
+  (* Generate a "random" matrix A *)
   let a = Mat.(sub_scalar (mul_scalar (uniform 5 5) 200.) 100.) in
   Format.printf "A:";
   Mat.print a;
+
+  (* QR decomposition *)
   let q, r = qr a in
+
+  (* Q is orthogonal, i.e., QQ' = Q'Q = I *)
   Format.printf "\nQ:";
   Mat.print q;
   assert (Approx.is_orthogonal q);
+
+  (* R is upper triangular *)
   Format.printf "\nR:";
   Mat.print r;
   assert (Approx.is_upper_tri r);
+
+  (* QR = A *)
   let qr = Mat.dot q r in
-  assert (Approx.equal a qr);
-  Format.printf "\nQR - A:";
-  Mat.print (Mat.sub qr a)
+  Format.printf "\nQR-A:";
+  Mat.print (Mat.sub qr a);
+  assert (Approx.equal a qr)
